@@ -17,9 +17,10 @@
 using namespace std;
 
 typedef struct pid_node {
-    long  pid;
-    char* name;
-    long* children;
+    long       ppid;
+    long       pid;
+    char*      name;
+    list<long> children;
 } pid_node;
 
 int main(int argc, char* argv[])
@@ -58,33 +59,37 @@ int main(int argc, char* argv[])
             return EXIT_FAILURE;
 
         node.name     = new char[256];
-        node.children = pids[node.pid].children;
+        node.children = pids[node.pid].children; /* reprends les child si ils sont déjà défini */
 
         // skip "<pid> (" dans stat
         f.ignore(strlen(entry->d_name) + 2);
 
         // lit le nom du pid
-        char *name_b = node.name;
-        while (f.peek() != ')') {
-            f.read (node.name++, 1);
-        }
-        *node.name = '\0';
-        node.name = name_b;
+        f.getline (node.name, 256, ')');
 
-        // skip ") S "
-        f.ignore (4);
+        // skip le status " S "
+        f.ignore (3);
 
         // lit le pid du parent
         char *ppid = new char[16];
-        char *ppid_b = ppid;
-        while (f.peek() != ' ') {
-            f.read (ppid++, 1);
-        }
-        *ppid = '\0';
-        ppid = ppid_b;
+        f.getline (ppid, 16, ' ');
+        node.ppid = strtol (ppid, NULL, 10);
 
+        // ajout du ppid dans le map si il est manquant
+        if (pids.find (node.ppid) == pids.end ())
+        {
+            pid_node parent_node;
+            /* tout ce qu'on sait c'est le pid du parent */
+            parent_node.pid = strtol(ppid, NULL, 10);
+
+            pids[node.ppid] = parent_node;
+        }
+
+        // ajoute de l'enfant au parent
+        pids[node.ppid].children.push_back (node.pid);
+
+        cout << "ppid: " << node.ppid << endl;
         cout << "pid: " << node.pid << endl;
-        cout << "name: " << node.name << endl;
-        cout << "ppid: " << ppid << endl << endl;
+        cout << "name: " << node.name << endl << endl;
     }
 }
