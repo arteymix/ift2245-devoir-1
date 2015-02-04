@@ -1,18 +1,15 @@
 /* File system */
 #include <dirent.h>
-
 #include <stdlib.h>
 #include <string.h>
 
 /* Streams */
-#include <iostream>  /* IO stream */
 #include <fstream>   /* File stream */
-#include <sstream>   /* String stream */
 
 /* Data structures */
-#include <string>
 #include <list>
 #include <map>
+#include <string>
 
 using namespace std;
 
@@ -25,17 +22,17 @@ typedef struct pid_node {
 
 int main(int argc, char* argv[])
 {
-    DIR *directory;
     struct dirent *entry;
     map<long, pid_node> pids;
 
-    directory = opendir("/proc");
+    DIR *directory = opendir("/proc");
 
     if (directory == NULL)
         return EXIT_FAILURE;
 
     while (entry = readdir(directory))
     {
+        // considère seulement les dossiers
         if (entry->d_type != DT_DIR)
             continue;
 
@@ -48,6 +45,7 @@ int main(int argc, char* argv[])
         if (*err)
             continue;
 
+        /* construit le chemin vers stat */
         string filename ("/proc/");
         filename.append (entry->d_name);
         filename.append ("/stat");
@@ -87,9 +85,5 @@ int main(int argc, char* argv[])
 
         // ajoute de l'enfant au parent
         pids[node.ppid].children.push_back (node.pid);
-
-        cout << "ppid: " << node.ppid << endl;
-        cout << "pid: " << node.pid << endl;
-        cout << "name: " << node.name << endl << endl;
     }
 }
