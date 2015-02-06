@@ -94,10 +94,13 @@ int main(int argc, char* argv[])
         f.ignore(strlen(entry->d_name) + 2);
 
         // lit le nom du pid
-        f.getline (node.name, PR_GET_NAME, ')');
+        f.getline (node.name, PR_GET_NAME, ' ');
 
-        // skip le status " S "
-        f.ignore (3);
+        // enlève la parenthèse fermante
+        node.name[strlen(node.name)-1] = '\0';
+
+        // skip le status "S "
+        f.ignore (2);
 
         // lit le pid du parent
         char *ppid = new char[16];
