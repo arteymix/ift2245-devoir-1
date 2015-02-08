@@ -124,5 +124,21 @@ int main(int argc, char* argv[])
         pids[node.pid] = node;
     }
 
-    pid_node_pretty_print (pids[0]);
+    /* imprime le pid 0 si aucun processus n'est demandé */
+    if (argc == 1)
+    {
+        pid_node_pretty_print (pids[0]);
+    }
+    else
+    {
+        /* imprime la hiéarchie de chaque processus demandés */
+        for (int i = 1; i < argc; i++)
+        {
+            /* TODO: vérifier que les arguments sont bien formés et que les
+             *       processus demandés existent
+             */
+            long pid = strtol(argv[i], NULL, 10);
+            pid_node_pretty_print (pids[pid]);
+        }
+    }
 }
