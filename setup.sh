@@ -1,19 +1,23 @@
 #!/usr/bin/env sh
+user="$1"
+useradd user "$2" #faut crypte $2 non?
+mkdir -p /home/$user/tp1/{src,bin,result}
+cp ptree.cpp /home/$user/tp1/src
+chown -r $user /home/$user/* 
 
-useradd $1 $2
-mkdir -p /home/$1/tp1/{src,bin,result}
-cp ptree.cpp /home/$1/tp1/src
-chown -r $1 /home/$1/* 
-
-pushd /home/$1/tp1
+pushd /home/$user/tp1
 
 g++ -std=c++11 src/ptree.cpp bin -o ptree
 chmod 777 bin/ptree
 export PATH=$PATH:/bin/ptree
+ptree > result/zero
+ptree 1 2 > result/one_two
 
-# Executer ptree et mettre dans result/zero
-# Executer ptree 1 2 et mettre dans result/one_two
-#ajouter txt auteur avec nos noms et da dans home/$1
-
+#La commande suivante a été prise sur StackOverflow :
+# 
+cat > Auteur.txt <<- EOM
+Vincent Antaki (p1038646),
+Guillaume Poirier-Morency (p1053380)
+EOM
 popd
 
