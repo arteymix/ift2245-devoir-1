@@ -3,7 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <sys/prctl.h>
+
 /* Streams */
+#include <iostream>
 #include <fstream>   /* File stream */
 
 /* Data structures */
@@ -14,16 +17,38 @@
 using namespace std;
 
 typedef struct pid_node {
-    long       ppid;
-    long       pid;
+    long       ppid; /* méta-donnée */
+    long       pid;  /* méta-donnée */
     char*      name;
     list<long> children;
 } pid_node;
 
+map<long, pid_node> pids;
+
+/**
+ * Imprime un noeud récursivement.
+ *
+ * @param node   noeud à imprimer
+ * @param indent indentation pour l'impression
+ */
+void pid_node_pretty_print (pid_node node, int indent = 0)
+{
+    int remaining = indent;
+    while (remaining--)
+        cout << "    "; /* 4 espaces */
+
+    cout << node.pid << " " << node.name << endl;
+
+    /* boucle dans les enfants */
+    for (list<long>::iterator child = node.children.begin (); child != node.children.end (); child++)
+        pid_node_pretty_print (pids[*child], indent + 1);
+}
+
 int main(int argc, char* argv[])
 {
     struct dirent *entry;
-    map<long, pid_node> pids;
+
+    pids[0] = pid_node { .ppid = 0, .pid = 0, .name = "[SCHED]" };
 
     DIR *directory = opendir("/proc");
 
@@ -56,17 +81,26 @@ int main(int argc, char* argv[])
         if (!f.is_open())
             return EXIT_FAILURE;
 
-        node.name     = new char[256];
+        /*
+         * Prépare un buffer pour lire le nom du processus.
+         *
+         * La taille maximale du nom d'un processus est définit par la constante
+         * PS_GET_NAME.
+         */
+        node.name     = new char[PR_GET_NAME];
         node.children = pids[node.pid].children; /* reprends les child si ils sont déjà défini */
 
         // skip "<pid> (" dans stat
         f.ignore(strlen(entry->d_name) + 2);
 
         // lit le nom du pid
-        f.getline (node.name, 256, ')');
+        f.getline (node.name, PR_GET_NAME, ' ');
 
-        // skip le status " S "
-        f.ignore (3);
+        // enlève la parenthèse fermante
+        node.name[strlen(node.name)-1] = '\0';
+
+        // skip le status "S "
+        f.ignore (2);
 
         // lit le pid du parent
         char *ppid = new char[16];
@@ -85,5 +119,26 @@ int main(int argc, char* argv[])
 
         // ajoute de l'enfant au parent
         pids[node.ppid].children.push_back (node.pid);
+
+        // ajoute le noeud au map
+        pids[node.pid] = node;
+    }
+
+    /* imprime le pid 0 si aucun processus n'est demandé */
+    if (argc == 1)
+    {
+        pid_node_pretty_print (pids[0]);
+    }
+    else
+    {
+        /* imprime la hiéarchie de chaque processus demandés */
+        for (int i = 1; i < argc; i++)
+        {
+            /* TODO: vérifier que les arguments sont bien formés et que les
+             *       processus demandés existent
+             */
+            long pid = strtol(argv[i], NULL, 10);
+            pid_node_pretty_print (pids[pid]);
+        }
     }
 }
