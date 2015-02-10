@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
         filename.append ("/stat");
 
         ifstream f;
-        f.open (filename);
+        f.open (filename.c_str ());
 
         if (!f.is_open())
             return EXIT_FAILURE;
