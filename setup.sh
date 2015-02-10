@@ -11,32 +11,30 @@ if [ -z "$user" -o -z "$password" ]; then
 fi
 
 useradd -m $user
-chpasswd $user:$password
+echo $user:$password | chpasswd 
 
 # copie des fichiers dans le dossier utilisateur
-cp ptree.cpp setup.sh /home/$user
+sudo -u $user cp ptree.cpp setup.sh /home/$user
 
-# La commande suivante est inspirée d'une réponse sur StackOverflow
-# http://stackoverflow.com/questions/23929235/bash-multi-line-string-with-extra-space
-su $user << EOM
-
-cd $HOME
+cd /home/$user
 
 # hiéarchie de dossiers
-mkdir -p tp1/{src,bin,result}
+sudo -u $user mkdir -p tp1/src tp1/bin tp1/result
+
+# copie des sources
+sudo -u $user mv ptree.cpp setup.sh tp1/src
+
+# ajoute tp1/bin au $PATH
+sudo -u $user echo 'export PATH=$PATH:$HOME/tp1/bin' >> .profile
 
 cd tp1
 
-# copie des sources
-cp ptree.cpp setup.sh tp1/src
+sudo -u $user g++ src/ptree.cpp -o bin/ptree
 
-g++ src/ptree.cpp bin -o bin/ptree
+sudo -u $user -i ptree > result/zero
+sudo -u $user -i ptree 1 2 > result/one_two
 
-export PATH=$PATH:$HOME/bin
-
-ptree > result/zero
-ptree 1 2 > result/one_two
-
-echo Vincent Antaki (p1038646) > Auteur.txt
-echo Guillaume Poirier-Morency (p1053380) >> Auteur.txt
-EOM
+# ajout des noms au fichiers d'auteurs
+sudo -u $user touch Auteur.txt
+echo 'Vincent Antaki (p1038646)' >> Auteur.txt
+echo 'Guillaume Poirier-Morency (p1053380)' >> Auteur.txt
