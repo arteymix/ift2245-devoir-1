@@ -48,7 +48,12 @@ int main(int argc, char* argv[])
 {
     struct dirent *entry;
 
-    pids[0] = pid_node { .ppid = 0, .pid = 0, .name = "[SCHED]" };
+    /* création du pid 0 */
+    pid_node pid_zero;
+    pid_zero.ppid = 0;
+    pid_zero.pid = 0;
+    pid_zero.name = "[SCHED]";
+    pids[0] = pid_zero;
 
     DIR *directory = opendir("/proc");
 
